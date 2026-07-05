@@ -1,0 +1,40 @@
+---
+import Base from "../layouts/Base.astro";
+const jsonld = [{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Vev", "applicationCategory": "BrowserApplication", "operatingSystem": "macOS, Windows, Linux", "description": "A from-scratch privacy-first desktop browser on Chromium with fingerprint resistance, WebRTC leak protection, on-device AI phishing detection, ad and tracker blocking, private windows, and an encrypted vault.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}];
+---
+<Base title="Vev \u2014 the private browser where privacy is the default" description="Vev is a from-scratch desktop browser on Chromium. Fingerprint resistance, WebRTC leak protection, on-device AI phishing detection, ad and tracker blocking, always-separate private windows, and an encrypted vault \u2014 all on by default, no accounts, no cloud." jsonld={jsonld}>
+<section class="hero"><div class="wrap">
+    <p class="kicker" data-reveal data-hero>Private browser · macOS, Windows &amp; Linux</p>
+    <h1 data-reveal data-hero>The browser that<br /><strong>protects you first</strong></h1>
+    <p class="lede" data-reveal data-hero>Vev is built from scratch on Chromium. Fingerprint resistance, WebRTC leak protection, on-device AI that catches phishing, ad &amp; tracker blocking, and an encrypted vault — turned on the moment you open it, not sold back to you later.</p>
+    <div class="actions" data-reveal data-hero><a class="btn" href="/download">Download Vev</a><a class="btn ghost" href="/guide">Read the guide</a></div>
+    <p class="sub" data-reveal data-hero>Free and open. No account. No telemetry.</p>
+ </div></section>
+ <section class="rule"><div class="wrap">
+   <div class="sec-head" data-reveal><span class="eyebrow">What's different</span><h2>Privacy is the default, not a setting</h2><p class="lead">Most browsers ship neutral and make you install extensions and flip switches to get private. Vev ships hardened. Everything below is on the first time you launch it.</p></div>
+   <div class="rows"><div class="row" data-reveal><h3>Fingerprint resistance</h3><div class="rtxt">Every copy of Vev presents the same fixed device profile — canvas, WebGL, audio, fonts, timezone, and platform are pinned. The spoof runs in the page <em>and</em> in web workers and service workers, so a background script can't leak your real GPU or core count and give you away.</div></div><div class="row" data-reveal><h3>No WebRTC IP leaks</h3><div class="rtxt">WebRTC can quietly reveal your real IP even behind a VPN. Vev limits it to the public interface and mDNS-masks your LAN address everywhere; private windows remove WebRTC entirely.</div></div><div class="row" data-reveal><h3>On-device AI phishing guard</h3><div class="rtxt">A real trained model reads the URL <em>and</em> the page content to catch a site pretending to be your bank. It runs locally in microseconds, learns from your choices, and never sends anything to a server.</div></div><div class="row" data-reveal><h3>Ad &amp; tracker blocking</h3><div class="rtxt">Network-level blocking with a live count in the Dynamic Island — the nudge that drops from the top. Tap it to see exactly what was blocked and allow anything you trust, per site.</div></div><div class="row" data-reveal><h3>Real private windows</h3><div class="rtxt">Private browsing always opens a <em>separate</em> window with its own session — never mixed with your normal tabs — with switches that hold for the whole private run.</div></div><div class="row" data-reveal><h3>Encrypted vault</h3><div class="rtxt">History, bookmarks, and saved passwords are sealed on disk with AES-256-GCM. Nothing syncs anywhere; the key never leaves your machine.</div></div></div>
+ </div></section>
+ <section class="rule"><div class="wrap center">
+   <div class="sec-head center" data-reveal><span class="eyebrow">Verified, not claimed</span><h2>Numbers from real runs</h2></div>
+   <div class="stats">
+     <div class="stat" data-reveal><div class="n">13</div><div class="l">trackers blocked on a single news page</div></div>
+     <div class="stat" data-reveal><div class="n">0</div><div class="l">WebRTC IPs leaked in private mode</div></div>
+     <div class="stat" data-reveal><div class="n">95.7%</div><div class="l">phishing model accuracy on held-out data</div></div>
+     <div class="stat" data-reveal><div class="n">256-bit</div><div class="l">AES-GCM sealing your local vault</div></div>
+   </div>
+ </div></section>
+ <section class="rule"><div class="wrap">
+   <div class="sec-head" data-reveal><span class="eyebrow">On-device AI</span><h2>How Huma works</h2><p class="lead">No model provider, no telemetry. The whole thing is a ~1&nbsp;KB model bundled in the browser.</p></div>
+   <div class="threes">
+     <div class="three" data-reveal><div class="num">01</div><h3>Reads the page</h3><p>Scores the URL with a trained neural net, then reads the loaded page. A site dressed up as a brand you trust, on the wrong domain, gets flagged before you can type your password.</p></div>
+     <div class="three" data-reveal><div class="num">02</div><h3>Refines with you</h3><p>When you allow a flagged site or a confirmed-bad host appears, Huma applies a small on-device update to a personal adapter. Your corrections stay on your machine.</p></div>
+     <div class="three" data-reveal><div class="num">03</div><h3>Helps you read</h3><p>Summarizes any page on-device with no hallucination, and quietly pre-warms the site you're likely to visit next so it opens faster.</p></div>
+   </div>
+   <p style="margin-top:44px" data-reveal><a class="textlink" href="/huma-ai">Read how Huma works &rarr;</a></p>
+ </div></section>
+ <section class="cta rule"><div class="wrap">
+   <h2 data-reveal>Bring your privacy. Keep your habits.</h2>
+   <p class="lead center" data-reveal style="margin:18px auto 34px">Command palette, find-in-page, zoom, drag-to-reorder tabs, search suggestions, and every keyboard shortcut you know — plus a media downloader (video, MP3, play online), a torrent client, extensions, a pop-up blocker, and browser-wide Tor or a custom proxy.</p>
+   <div class="actions" style="justify-content:center" data-reveal><a class="btn" href="/download">Get Vev</a><a class="btn ghost" href="/guide">See everything it does</a></div>
+ </div></section>
+</Base>

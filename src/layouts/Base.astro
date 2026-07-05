@@ -1,0 +1,143 @@
+---
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { ViewTransitions } from "astro:transitions";
+import "../styles/global.css";
+
+const { title, description, jsonld } = Astro.props;
+const ldItems = jsonld ? (Array.isArray(jsonld) ? jsonld : [jsonld]) : [];
+const site = "https://vev-browser.vercel.app";
+const canonical = new URL(Astro.url.pathname, site).href;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="google-site-verification" content="REPLACE_WITH_GOOGLE_TOKEN" />
+    <meta name="msvalidate.01" content="REPLACE_WITH_BING_TOKEN" />
+    <link rel="preload" href="/fonts/Satoshi-300.woff2" as="font" type="font/woff2" crossorigin />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Vev" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={site + "/assets/og-logo.png"} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={site + "/assets/og-logo.png"} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <ViewTransitions />
+    <script is:inline>
+      // Mark JS-on immediately so animated elements start hidden without a
+      // flash of the final state (and stay visible if JS never runs).
+      document.documentElement.classList.add("anim");
+    </script>
+    {ldItems.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}
+  </head>
+  <body>
+    <Nav />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      import { gsap } from "gsap";
+      import { ScrollTrigger } from "gsap/ScrollTrigger";
+      import Lenis from "lenis";
+      gsap.registerPlugin(ScrollTrigger);
+
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let lenis: any = null;
+
+      function initLenis() {
+        if (reduce || lenis) return;
+        lenis = new Lenis({ duration: 1.1, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
+        lenis.on("scroll", ScrollTrigger.update);
+        gsap.ticker.add((time: number) => lenis.raf(time * 1000));
+        gsap.ticker.lagSmoothing(0);
+      }
+
+      // Split a paragraph's text into word spans for the word-by-word reveal.
+      function splitWords(el: HTMLElement) {
+        if (el.dataset.split) return;
+        el.dataset.split = "1";
+        const walk = (node: ChildNode): Node[] => {
+          if (node.nodeType === 3) {
+            return (node.textContent || "").split(/(\s+)/).map((w) => {
+              if (!w.trim()) return document.createTextNode(w);
+              const s = document.createElement("span");
+              s.className = "word";
+              s.textContent = w;
+              return s;
+            });
+          }
+          const clone = node.cloneNode(false);
+          node.childNodes.forEach((c) => walk(c).forEach((n) => clone.appendChild(n)));
+          return [clone];
+        };
+        const frag = document.createDocumentFragment();
+        [...el.childNodes].forEach((c) => walk(c).forEach((n) => frag.appendChild(n)));
+        el.innerHTML = "";
+        el.appendChild(frag);
+        el.style.opacity = "1"; // container shown; words carry the animation
+      }
+
+      function animate() {
+        ScrollTrigger.getAll().forEach((t) => t.kill());
+        // The big statement paragraphs reveal word by word instead of as a block.
+        document.querySelectorAll<HTMLElement>(".hero .lede, .page-head p").forEach((el) => {
+          el.removeAttribute("data-hero");
+          el.setAttribute("data-words", "");
+        });
+        const blocks = gsap.utils.toArray<HTMLElement>("[data-reveal]");
+        const paras = gsap.utils.toArray<HTMLElement>("[data-words]");
+
+        if (reduce) {
+          gsap.set(blocks, { opacity: 1, y: 0 });
+          return;
+        }
+
+        // Above-the-fold intro plays immediately with a soft stagger.
+        const hero = blocks.filter((el) => el.hasAttribute("data-hero"));
+        if (hero.length) gsap.to(hero, { opacity: 1, y: 0, duration: 1, ease: "power3.out", stagger: 0.09, delay: 0.05 });
+
+        // Blocks ease up as they scroll in.
+        blocks.filter((el) => !el.hasAttribute("data-hero")).forEach((el) => {
+          gsap.to(el, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+        });
+
+        // Paragraphs reveal word by word (desktop only — splitting on narrow
+        // screens is finicky; mobile just fades the paragraph in).
+        const wide = window.innerWidth >= 900;
+        paras.forEach((el) => {
+          if (!wide) {
+            gsap.to(el, { opacity: 1, duration: 0.6, ease: "power2.out",
+              scrollTrigger: { trigger: el, start: "top 90%", once: true } });
+            return;
+          }
+          splitWords(el);
+          const words = el.querySelectorAll(".word");
+          gsap.fromTo(words,
+            { opacity: 0, filter: "blur(6px)", y: 6 },
+            { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.5, ease: "power2.out", stagger: 0.018,
+              scrollTrigger: { trigger: el, start: "top 82%", once: true } });
+        });
+
+        ScrollTrigger.refresh();
+      }
+
+      document.addEventListener("click", (e) => {
+        if ((e.target as HTMLElement).closest("#navToggle"))
+          document.getElementById("navLinks")?.classList.toggle("open");
+      });
+      document.addEventListener("astro:page-load", () => { initLenis(); animate(); });
+    </script>
+  </body>
+</html>

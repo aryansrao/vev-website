@@ -1,0 +1,24 @@
+---
+import Base from "../layouts/Base.astro";
+const jsonld = [{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Vev", "operatingSystem": "macOS, Windows, Linux", "applicationCategory": "BrowserApplication", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Vev really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 free and open source, with no paid tiers and no account. Every privacy feature is on by default."}}, {"@type": "Question", "name": "Which platforms can I run it on?", "acceptedAnswer": {"@type": "Answer", "text": "macOS, Windows, and Linux. All three share the same Rust and Chromium codebase; you can also build from source on any of them."}}, {"@type": "Question", "name": "Why does it need the CEF distribution to build?", "acceptedAnswer": {"@type": "Answer", "text": "Vev embeds Chromium Embedded Framework as its rendering engine. The prebuilt CEF binaries are large, so they're fetched once into a local directory rather than committed to the repo."}}, {"@type": "Question", "name": "How do I update?", "acceptedAnswer": {"@type": "Answer", "text": "Download the latest build for your OS, or pull the repo and run make run again. Your encrypted vault and settings are kept in your OS app-data directory and are preserved across updates."}}]}];
+---
+<Base title="Download Vev \u2014 macOS, Windows, Linux" description="Download the Vev privacy browser for macOS, Windows, or Linux, or build it from source in a few commands. Free and open, built on Chromium Embedded Framework." jsonld={jsonld}>
+<section class="page-head"><div class="wrap"><span class="eyebrow" data-reveal data-hero>Download</span><h1 data-reveal data-hero>Get Vev</h1><p data-reveal data-hero>Free and open. Pick your platform, or build from source — the same Rust workspace and Chromium engine back all three.</p></div></section><section class="rule"><div class="wrap">
+   <div class="dls">
+     <div class="dl" data-reveal><h3>macOS</h3><div class="meta">Apple Silicon · <a class="textlink" href="https://github.com/aryansrao/vev/releases/latest/download/Vev-macos-x64.dmg">Intel build</a></div><a class="btn" href="https://github.com/aryansrao/vev/releases/latest/download/Vev-macos-arm64.dmg">Download .dmg</a></div>
+     <div class="dl" data-reveal><h3>Windows <span class="soon">beta</span></h3><div class="meta">Windows 10 &amp; 11 · x64 · built in CI</div><a class="btn ghost" href="https://github.com/aryansrao/vev/releases/latest/download/Vev-windows-x64.zip">Download .zip</a></div>
+     <div class="dl" data-reveal><h3>Linux <span class="soon">beta</span></h3><div class="meta">X11 · x64 · built in CI</div><a class="btn ghost" href="https://github.com/aryansrao/vev/releases/latest/download/Vev-linux-x64.tar.gz">Download .tar.gz</a></div>
+   </div>
+ </div></section>
+ <section class="rule"><div class="wrap narrow prose" data-reveal>
+   <h2>Build from source</h2>
+   <p>Vev is a Tauri 2 (Rust) shell over Chromium Embedded Framework. You'll need Rust (stable), the CEF binary distribution, and the <code>bundle-cef-app</code> helper.</p>
+   <pre><code>git clone https://github.com/aryansrao/vev
+cd vev
+make run        # build, bundle, and launch
+make test       # run the workspace test suite
+make help       # list every target</code></pre>
+   <p>CEF needs the assembled app bundle to spawn its helper processes, so a plain <code>cargo run</code> can't launch the browser — always go through <code>make run</code>. Full per-platform toolchain setup is in the <a class="textlink" href="/docs">documentation</a>.</p>
+ </div></section>
+ <section class="rule"><div class="wrap narrow"><div class="sec-head" data-reveal><span class="eyebrow">FAQ</span><h2>Questions about installing</h2></div><div class="faq" data-reveal><details><summary>Is Vev really free?</summary><p>Yes — free and open source, with no paid tiers and no account. Every privacy feature is on by default.</p></details><details><summary>Which platforms can I run it on?</summary><p>macOS, Windows, and Linux. All three share the same Rust and Chromium codebase; you can also build from source on any of them.</p></details><details><summary>Why does it need the CEF distribution to build?</summary><p>Vev embeds Chromium Embedded Framework as its rendering engine. The prebuilt CEF binaries are large, so they&#x27;re fetched once into a local directory rather than committed to the repo.</p></details><details><summary>How do I update?</summary><p>Download the latest build for your OS, or pull the repo and run make run again. Your encrypted vault and settings are kept in your OS app-data directory and are preserved across updates.</p></details></div></div></section>
+</Base>

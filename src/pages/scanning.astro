@@ -1,0 +1,62 @@
+---
+import Base from "../layouts/Base.astro";
+const faqs = [
+  ["Is my browsing sent to these scanners?", "No, not for everyday browsing. The automatic layer is fully on-device — the local model plus locally-downloaded blocklists — so nothing is transmitted. The multi-source deep scan, which does query online services, is opt-in and runs only when you ask for it on a specific link."],
+  ["When the deep scan runs, does it leak my IP?", "The scan is routed through Vev's embedded Tor, so the services see a Tor exit IP, never yours. Through Tor your IP is never exposed to the scanners. The URL itself is sent to the reputation services so they can check it — over Tor, so it can't be tied back to you. The always-on local layer, by contrast, never transmits anything."],
+  ["Why not scan every link automatically online?", "Because querying an online reputation service means sending it the URL you're about to visit — a privacy cost. Vev keeps the always-on layer local and reserves the online multi-source scan for grey-area links you choose to check."],
+  ["What decides the final percentage?", "Each source votes with an authority weight. A definite hit from a high-authority feed (Google Safe Browsing, VirusTotal consensus) dominates; several weaker sources agreeing also raises it; sources that return nothing simply don't vote. The result is one combined danger percentage plus each source's verdict."],
+];
+const faqLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) };
+const jsonld = [{ "@context": "https://schema.org", "@type": "WebPage", name: "Threat scanning in Vev" }, faqLd];
+---
+<Base title="Threat scanning in Vev — multi-source, isolated, Tor-routed" description="Vev verifies links against many independent threat-intelligence sources — Google Safe Browsing, VirusTotal, URLhaus, ThreatFox, OTX — combined with its local AI model into one danger percentage, routed through Tor so nothing leaks in the clear." jsonld={jsonld}>
+  <section class="page-head"><div class="wrap">
+    <span class="eyebrow" data-reveal data-hero>Threat scanning</span>
+    <h1 data-reveal data-hero>Checked before you trust it</h1>
+    <p data-reveal data-hero>Vev verifies a link against many independent sources and the on-device model, and combines them into one honest danger percentage — with your IP and, where possible, the URL never leaving in the clear.</p>
+  </div></section>
+
+  <section class="rule"><div class="wrap">
+    <div class="sec-head" data-reveal><span class="eyebrow">Two layers</span><h2>Private by default, powerful on demand</h2><p class="lead">The everyday layer never touches the network. The deep scan is there when you want a second opinion on a suspicious link.</p></div>
+    <div class="rows">
+      <div class="row" data-reveal><h3>Always-on, on-device</h3><div class="rtxt">Every navigation is scored by the local trained model and checked against blocklists that Vev downloads and holds on your machine (URLhaus and more). Nothing about the URL is transmitted — this layer works with the network unplugged.</div></div>
+      <div class="row" data-reveal><h3>Deep scan, on request</h3><div class="rtxt">On a grey-area link, choose <strong>Deep scan</strong> from the nudge or the command palette. Vev queries several independent reputation services at once and blends their verdicts with the local model into a single percentage — routed through Tor so the services see a Tor exit, not you.</div></div>
+      <div class="row" data-reveal><h3>You decide</h3><div class="rtxt">The result appears in the Dynamic Island with each source's verdict. If it's dangerous, go back; if you trust it, open anyway. Vev informs — it doesn't silently decide for you.</div></div>
+    </div>
+  </div></section>
+
+  <section class="rule"><div class="wrap">
+    <div class="sec-head" data-reveal><span class="eyebrow">The sources</span><h2>Many eyes, one score</h2><p class="lead">Independent feeds catch different things — one is strong on fresh phishing, another on malware, another on engine consensus. Together they cover far more than any single list.</p></div>
+    <div class="prose" style="max-width:none" data-reveal>
+      <div style="overflow-x:auto">
+      <table class="shortcuts">
+        <tbody>
+          <tr><td><strong>Local model</strong></td><td>on-device trained ML over URL + page content — always on, fully private</td></tr>
+          <tr><td><strong>Google Safe Browsing</strong></td><td>malware + social-engineering URLs — checked over Tor</td></tr>
+          <tr><td><strong>VirusTotal</strong></td><td>consensus across 70+ engines — best for grey-area links</td></tr>
+          <tr><td><strong>abuse.ch URLhaus</strong></td><td>millions of malware-distribution URLs, refreshed constantly</td></tr>
+          <tr><td><strong>abuse.ch ThreatFox</strong></td><td>malware IOCs and command-and-control infrastructure</td></tr>
+          <tr><td><strong>AlienVault OTX</strong></td><td>community threat-intel pulses across the security world</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="note">Each source runs concurrently with a short timeout, so a slow one never holds up the scan. A source that returns nothing simply doesn't vote — the score comes only from sources that had something to say.</p>
+    </div>
+  </div></section>
+
+  <section class="rule"><div class="wrap narrow">
+    <div class="sec-head" data-reveal><span class="eyebrow">Privacy of the scan itself</span><h2>Nothing leaves in the clear</h2></div>
+    <div class="prose" data-reveal>
+      <p>A scanner is only worth using if using it doesn't expose you. Vev's deep scan is built around that:</p>
+      <ul>
+        <li><strong>Tor-routed.</strong> Every scan request goes through Vev's embedded Tor, so the reputation services — and the site itself — see a Tor exit IP, never your real address.</li>
+        <li><strong>Local-first.</strong> The always-on layer — the model and downloadable blocklists — is checked entirely on your device and transmits nothing. Only the opt-in deep scan sends the URL out, and only over Tor.</li>
+        <li><strong>Opt-in.</strong> The online scan never runs by itself. The always-on protection is local; you choose when to reach for the network.</li>
+      </ul>
+    </div>
+  </div></section>
+
+  <section class="rule"><div class="wrap narrow"><div class="sec-head" data-reveal><span class="eyebrow">FAQ</span><h2>Questions about scanning</h2></div><div class="faq" data-reveal>
+    {faqs.map(([q, a]) => (<details><summary>{q}</summary><p>{a}</p></details>))}
+  </div></div></section>
+</Base>

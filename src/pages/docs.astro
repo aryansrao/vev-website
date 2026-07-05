@@ -1,0 +1,63 @@
+---
+import Base from "../layouts/Base.astro";
+const jsonld = [{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Vev documentation", "author": {"@type": "Organization", "name": "Vev"}}];
+---
+<Base title="Vev documentation \u2014 architecture, building on every platform, and configuration" description="Full documentation for Vev: architecture (Tauri + CEF), building on macOS/Windows/Linux, every subsystem, the configuration reference, retraining the AI model, the threat model, and contributing." jsonld={jsonld}>
+<section class="page-head"><div class="wrap"><span class="eyebrow" data-reveal data-hero>Documentation</span><h1 data-reveal data-hero>How Vev is built</h1><p data-reveal data-hero>The architecture, how to build it on each platform, how every subsystem works, the config reference, and the threat model — for anyone who wants to go deeper or contribute.</p></div></section><section class="rule"><div class="wrap narrow prose">
+   <div class="toc" data-reveal>
+     <a href="#arch">Architecture</a><a href="#build">Building from source</a><a href="#subsystems">Subsystems</a>
+     <a href="#config">Configuration reference</a><a href="#model">Retraining the AI</a><a href="#threat">Threat model</a><a href="#contributing">Contributing</a>
+   </div>
+
+   <h2 id="arch" data-reveal>Architecture</h2>
+   <p data-reveal>Vev is a <strong>Tauri 2</strong> (Rust) shell that embeds <strong>Chromium Embedded Framework</strong> (CEF) as the real multi-process rendering engine. The shell draws the chrome — tab strip, omnibox, the Dynamic Island, and the internal <code>vev://</code> pages — in a lightweight system webview. Each tab is a separate CEF browser with its own renderer process, so one page crashing can't take down the others.</p>
+   <p data-reveal>A Rust <strong>workspace</strong> provides the substance: privacy, security, blocking, storage, Tor, downloads, and the on-device AI. A second small binary, <code>vev_helper</code>, is the entry point for CEF's renderer and service-worker processes; it installs the fingerprint spoof into every JavaScript context.</p>
+
+   <h2 id="build" data-reveal>Building from source</h2>
+   <p data-reveal><strong>Prerequisites (all platforms):</strong> Rust stable, the CEF binary distribution, and the <code>bundle-cef-app</code> helper from a cef-rs checkout. The build is orchestrated by a Makefile.</p>
+   <pre><code>make run        # build + bundle + launch
+make test       # cargo test across the workspace
+make bundle     # assemble the app bundle without launching
+make autotest   # in-app runtime self-test suite
+make train      # retrain the Huma phishing model (ONNX)
+make clean      # kill stale processes and clear bundle state</code></pre>
+   <h3 data-reveal>macOS</h3>
+   <p data-reveal>Verified on Apple Silicon. Install the CEF distribution to <code>~/.local/share/cef</code>, then <code>make run</code>. Do not re-sign the bundle with <code>codesign --deep</code> — it corrupts CEF's nested signatures; rebuild with <code>make bundle</code>, which signs correctly.</p>
+   <h3 data-reveal>Windows</h3>
+   <p data-reveal>Use the Windows CEF distribution and the MSVC Rust toolchain, then <code>make dist-win</code> (or the equivalent <code>bundle-cef-app</code> invocation). Windows uses the same Rust workspace; the window-embedding layer is being brought up to parity with macOS.</p>
+   <h3 data-reveal>Linux</h3>
+   <p data-reveal>Use the Linux CEF distribution and the standard toolchain, then <code>make dist-linux</code>. As on Windows, the workspace and engine are shared; platform window embedding is in progress.</p>
+
+   <h2 id="subsystems" data-reveal>Subsystems</h2>
+   <p data-reveal>Each lives in its own crate under <code>crates/</code>:</p>
+   <ul data-reveal>
+     <li><strong>huma</strong> — the on-device AI: <code>guard</code> (URL model), <code>content</code> (page-content phishing), <code>adapt</code> (self-adaptation), <code>model</code> (ONNX via tract), <code>read</code> (summaries), <code>predict</code> (prefetch).</li>
+     <li><strong>vev-fingerprint</strong> — the fixed reference profile and the spoof script injected into every context.</li>
+     <li><strong>vev-network</strong> — DoH policy, HTTPS-upgrade rules, resolver allowlist.</li>
+     <li><strong>vev-blocklist</strong> — adblock-rust network blocking, cosmetic filtering, the live threat feed, and the community phishing feed.</li>
+     <li><strong>vev-storage</strong> — the AES-256-GCM encrypted vault for history, bookmarks, and passwords.</li>
+     <li><strong>vev-tor</strong> — embedded Arti and its local SOCKS bridge.</li>
+     <li><strong>vev-download</strong> / <strong>vev-torrent</strong> — the segmented downloader and the librqbit torrent engine.</li>
+   </ul>
+
+   <h2 id="config" data-reveal>Configuration reference</h2>
+   <p data-reveal>User data and config live in your OS app-data directory (on macOS, <code>~/Library/Application Support/com.vev.browser</code>). Key files:</p>
+   <ul data-reveal>
+     <li><code>config.json</code> — <code>search_engine</code>, <code>home_url</code>, <code>huma_guard</code> (bool), <code>community_feed_url</code>, <code>community_reporting</code> (bool, default false), <code>report_endpoint</code>.</li>
+     <li><code>network.json</code> — resolver allowlist and DoH overrides.</li>
+     <li><code>vault.enc</code> — the encrypted store; <code>master.key</code> — the local key (0600).</li>
+     <li><code>huma-adapt.json</code> — your personal Guard adapter; <code>huma-nav.json</code> — the prefetch model.</li>
+     <li><code>extensions/</code> — unpacked extensions; <code>blocklists/</code> — optional filter lists.</li>
+   </ul>
+
+   <h2 id="model" data-reveal>Retraining the AI</h2>
+   <p data-reveal>The phishing model is trained offline and bundled as a ~1&nbsp;KB ONNX file. To retrain, run <code>make train</code>: it generates a labelled dataset, extracts features with the <em>same</em> Rust extractor the browser uses at inference (guaranteeing train/serve parity), trains a small MLP with numpy, and exports <code>model.onnx</code>. The training scripts live in <code>scripts/train_guard/</code>.</p>
+
+   <h2 id="threat" data-reveal>Threat model</h2>
+   <p data-reveal><strong>Vev protects against:</strong> cross-site tracking via fingerprinting, WebRTC IP leaks, plaintext DNS, third-party cookies, network-level ads and trackers, phishing (URL and content), and local data theft (the vault is encrypted at rest).</p>
+   <p data-reveal><strong>Vev does not fully protect against:</strong> a few remaining fingerprint surfaces (CSS-media screen size, local font enumeration, some headless signals), and per-tab Tor (only browser-wide Tor is available with the embedded engine). These are documented deliberately.</p>
+
+   <h2 id="contributing" data-reveal>Contributing</h2>
+   <p data-reveal>Vev is open source on <a class="textlink" href="https://github.com/aryansrao/vev">GitHub</a>. Each subsystem is a self-contained crate with unit tests; the in-app <code>make autotest</code> suite exercises the real command layer at runtime. Runtime verification — reproduction steps, expected vs. observed — is preferred over compilation alone before a feature is considered done.</p>
+ </div></section>
+</Base>

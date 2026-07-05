@@ -1,0 +1,207 @@
+---
+const groups = [
+  {
+    label: "Features",
+    links: [
+      ["Huma AI", "/huma-ai", "On-device phishing model, reader & prefetch"],
+      ["Privacy & security", "/privacy-security", "Fingerprinting, WebRTC, DoH, vault"],
+      ["Private windows", "/incognito", "Real isolation, zero leaks"],
+      ["Extensions", "/extensions", "Content-script support"],
+    ],
+  },
+  {
+    label: "Security",
+    links: [
+      ["Threat scanning", "/scanning", "Isolated, Tor-routed multi-source scan"],
+      ["Community feed", "/community-feed", "Crowd-confirmed phishing"],
+    ],
+  },
+  {
+    label: "Learn",
+    links: [
+      ["User guide", "/guide", "How to use every feature"],
+      ["Documentation", "/docs", "Architecture & building"],
+    ],
+  },
+];
+---
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="/" aria-label="Vev home"><img src="/assets/vev-wordmark-dark.png" alt="Vev" class="brand-mark" /></a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+    <nav class="nav-links" id="navLinks">
+      {groups.map((g) => (
+        <div class="nav-group">
+          <button class="nav-trigger" aria-expanded="false" aria-haspopup="true">{g.label}</button>
+          <div class="nav-panel">
+            <div class="nav-panel-in">
+              {g.links.map(([t, href, sub]) => (
+                <a class="nav-item" href={href}><span class="ni-t">{t}</span><span class="ni-s">{sub}</span></a>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </nav>
+    <div class="nav-right">
+      <a class="dl" href="/download">Download</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  /* JS fully owns open/close via .is-open, so click-lock and
+     hover-preview can coexist without the two fighting each other.
+     Only the text color changes — no background pill, matching the
+     rest of the site's plain hover style. */
+  .nav-group:hover .nav-trigger {
+    color: var(--ink-2);
+  }
+
+  .nav-group:hover .nav-panel {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    pointer-events: none;
+  }
+
+  .nav-group.is-open .nav-trigger {
+    color: var(--ink);
+  }
+
+  .nav-group.is-open .nav-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+
+  function splitWords(el: HTMLElement) {
+    if (el.dataset.split) return;
+    el.dataset.split = "1";
+    const text = el.textContent || "";
+    el.innerHTML = "";
+    text.split(/(\s+)/).forEach((w) => {
+      if (!w.trim()) {
+        el.appendChild(document.createTextNode(w));
+        return;
+      }
+      const span = document.createElement("span");
+      span.className = "word";
+      span.textContent = w;
+      el.appendChild(span);
+    });
+  }
+
+  function setupNav() {
+    const header = document.querySelector("header.nav");
+    if (!header || header.hasAttribute("data-nav-bound")) return;
+    header.setAttribute("data-nav-bound", "1");
+
+    const groups = Array.from(header.querySelectorAll<HTMLElement>(".nav-group"));
+    if (!groups.length) return;
+
+    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    let openGroup: HTMLElement | null = null;
+    let locked = false;
+    let openTimer: number | null = null;
+    let closeTimer: number | null = null;
+
+    function animateItems(panel: HTMLElement) {
+      panel.querySelectorAll<HTMLElement>(".ni-t").forEach((t) => splitWords(t));
+      const words = panel.querySelectorAll<HTMLElement>(".ni-t .word");
+      const subs = panel.querySelectorAll<HTMLElement>(".ni-s");
+      gsap.killTweensOf(words);
+      gsap.killTweensOf(subs);
+      gsap.fromTo(
+        words,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.65, ease: "power3.out", stagger: 0.045 }
+      );
+      gsap.fromTo(
+        subs,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out", stagger: 0.05, delay: 0.12 }
+      );
+    }
+
+    function reallyOpen(g: HTMLElement, lock: boolean) {
+      const changed = openGroup !== g;
+      if (changed) {
+        openGroup?.classList.remove("is-open");
+        openGroup?.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
+        g.classList.add("is-open");
+        g.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "true");
+        openGroup = g;
+        const panel = g.querySelector<HTMLElement>(".nav-panel");
+        if (panel) animateItems(panel);
+        locked = lock;
+      } else if (lock) {
+        locked = true;
+      }
+    }
+
+    // Small "hover intent" delay: a quick pass of the cursor across the
+    // bar toward another tab won't trigger every tab it brushes past.
+    function scheduleOpen(g: HTMLElement, lock: boolean) {
+      if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+      if (openTimer) clearTimeout(openTimer);
+      if (lock || openGroup === g) {
+        reallyOpen(g, lock);
+        return;
+      }
+      openTimer = window.setTimeout(() => reallyOpen(g, lock), 80);
+    }
+
+    function closeAll() {
+      if (openTimer) { clearTimeout(openTimer); openTimer = null; }
+      if (!openGroup) return;
+      openGroup.classList.remove("is-open");
+      openGroup.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
+      openGroup = null;
+      locked = false;
+    }
+
+    groups.forEach((g) => {
+      const trigger = g.querySelector<HTMLElement>(".nav-trigger");
+      if (!trigger) return;
+
+      if (canHover) {
+        g.addEventListener("mouseenter", () => scheduleOpen(g, false));
+        g.addEventListener("mouseleave", () => {
+          if (openTimer) { clearTimeout(openTimer); openTimer = null; }
+          closeTimer = window.setTimeout(() => {
+            if (openGroup === g && !locked) closeAll();
+          }, 180);
+        });
+      }
+
+      trigger.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (openGroup === g && locked) closeAll();
+        else scheduleOpen(g, true);
+      });
+
+      g.querySelectorAll(".nav-item").forEach((item) => {
+        item.addEventListener("click", () => closeAll());
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (openGroup && !openGroup.contains(e.target as Node)) closeAll();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAll();
+    });
+  }
+
+  setupNav();
+  document.addEventListener("astro:page-load", () => {
+    document.querySelectorAll("header.nav[data-nav-bound]").forEach((h) => h.removeAttribute("data-nav-bound"));
+    setupNav();
+  });
+</script>
